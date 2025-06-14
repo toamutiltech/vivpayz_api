@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
 from vivpayz.config import Config
+from flask_cors import CORS
 
 load_dotenv()
 
@@ -15,6 +16,7 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    CORS(app, supports_credentials=True)
 
     db.init_app(app)
     migrate.init_app(app, db)

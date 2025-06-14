@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
+import jwt
 from flask_jwt_extended import create_access_token
+from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 import random
 from vivpayz import db
@@ -87,12 +89,34 @@ def register():
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
+
     email = data.get("email")
-    pw    = data.get("password")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
 
     user = User.query.filter_by(email=email).first()
-    if not user or not user.check_password(pw):
-        return jsonify(msg="Invalid credentials"), 401
 
-    access_token = create_access_token(identity=user.email)
-    return jsonify(access_token=access_token), 200
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    payload = {
+        "user_id": user.id,
+        "email": user.email,
+        "exp": datetime.utcnow() + timedelta(hours=24)
+    }
+
+    token = jwt.encode(payload, current_app.config["JWT_SECRET_KEY"], algorithm="HS256")
+
+    return jsonify({
+        "message": "Login successful",
+        "token": token,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "fname": user.fname,
+            "lname": user.lname,
+            "phone": user.phone,
+        }
+    }), 200
