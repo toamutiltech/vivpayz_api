@@ -15,14 +15,21 @@ jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
     CORS(app, supports_credentials=True)
+
+    app.config.from_object(Config)
 
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
 
     from vivpayz.auth.routes import auth_bp  
+    from vivpayz.user.routes import user_bp
+    from vivpayz.wallet.routes import wallet_bp
+    from vivpayz.card.routes import card_bp
     
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(user_bp)
+    app.register_blueprint(wallet_bp)
+    app.register_blueprint(card_bp)
     return app

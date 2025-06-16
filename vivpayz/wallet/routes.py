@@ -1,16 +1,24 @@
 from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from vivpayz.utils.auth import token_required
+from vivpayz.models import Wallet
 
-wallet_bp = Blueprint("wallet", __name__)
+wallet_bp = Blueprint("wallets", __name__, url_prefix="/api/wallets")
 
-@wallet_bp.route("/balance", methods=["GET"])
-@jwt_required()
-def get_balance():
-    user_email = get_jwt_identity()
-    # TODO: look up real balance from DB by user_email
-    return jsonify({
-        "user": user_email,
-        "balance": 15000,
-        "currency": "NGN",
-        "status": "success"
-    })
+@wallet_bp.route("/", methods=["GET"])
+@token_required
+def get_wallets(current_user):
+    try:
+        wallets = Wallet.query.filter_by(user_id=current_user.id).all()
+
+        data = [
+            {
+                "currency": wallet.currency,
+                "balance": float(wallet.balance),
+            } for wallet in wallets
+        ]
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({"error": "Failed to retrieve wallets", "message": str(e)}), 500
+
