@@ -72,3 +72,18 @@ class Card(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User", backref="cards")
+
+
+class Transaction(db.Model):
+    __tablename__ = 'transactions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'), nullable=False)
+    type = db.Column(db.Enum('credit', 'debit'), nullable=False)
+    purpose = db.Column(db.String(255))
+    amount = db.Column(db.Numeric(15, 2), nullable=False)
+    currency = db.Column(db.String(10), nullable=False)
+    reference = db.Column(db.String(100), nullable=False, unique=True)
+    status = db.Column(db.Enum('pending', 'success', 'failed'), default='success')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
