@@ -87,3 +87,37 @@ class Transaction(db.Model):
     reference = db.Column(db.String(100), nullable=False, unique=True)
     status = db.Column(db.Enum('pending', 'success', 'failed'), default='success')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ExchangeRate(db.Model):
+    __tablename__ = 'exchange_rates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    base_currency = db.Column(db.String(10), nullable=False)
+    target_currency = db.Column(db.String(10), nullable=False)
+    rate = db.Column(db.Numeric(18, 6), nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('base_currency', 'target_currency', name='unique_pair'),
+    )
+
+    def __repr__(self):
+        return f"<ExchangeRate {self.base_currency}->{self.target_currency} = {self.rate}>"
+    
+class CurrencyConversion(db.Model):
+    __tablename__ = 'currency_conversions'
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    from_currency = db.Column(db.String(3), nullable=False)
+    to_currency = db.Column(db.String(3), nullable=False)
+    from_amount = db.Column(db.Numeric(18, 2), nullable=False)
+    rate = db.Column(db.Numeric(18, 6), nullable=False)
+    to_amount = db.Column(db.Numeric(18, 2), nullable=False)
+    status = db.Column(db.Enum('PENDING', 'SUCCESS', 'FAILED'), default='PENDING')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='currency_conversions')
+
+    def __repr__(self):
+        return f"<Conversion {self.from_amount} {self.from_currency} -> {self.to_amount} {self.to_currency}>"

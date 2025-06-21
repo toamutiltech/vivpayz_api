@@ -29,10 +29,14 @@ def create_app():
     from vivpayz.wallet.routes import wallet_bp
     from vivpayz.card.routes import card_bp
     from vivpayz.payment.routes import paystack
+    from vivpayz.main.routes import main
+    from vivpayz.convert.routes import convert_bp
     
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(user_bp)
     app.register_blueprint(wallet_bp)
     app.register_blueprint(card_bp)
     app.register_blueprint(paystack)
+    app.register_blueprint(main)
+    app.register_blueprint(convert_bp)
     return app
