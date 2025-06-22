@@ -123,19 +123,27 @@ def verify_payment():
 
         payment_data = paystack_res['data']
         status = payment_data['status']
-        amount_paid = payment_data['amount'] / 100
+        amount_paid = float(payment_data['amount']) / 100
 
         transaction = Transaction.query.filter_by(reference=reference).first()
         if not transaction:
             return jsonify({'status': 'failed', 'error': 'Reason...'}), 400
 
+
+
         if status == 'success' and transaction.status != 'success':
+            transaction.amount = amount_paid  # Update with actual paid amount
             transaction.status = 'success'
             db.session.commit()
 
             wallet = Wallet.query.get(transaction.wallet_id)
-            wallet.balance += transaction.amount
+            if not wallet:
+                return jsonify({'error': 'Wallet not found'}), 404
+
+            wallet.balance += transaction.amount  # Now it's safe
             db.session.commit()
+
+
 
             return jsonify({
                 'status': 'success',

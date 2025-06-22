@@ -17,7 +17,10 @@ def create_app():
     app = Flask(__name__)
     CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
+    #CORS(app, origins=["https://vivpayz-fintech.vercel.app"], supports_credentials=True)
 
+    #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://bizapplivecom_vivpay:Bk9!39[O*+Cb@localhost/bizapplivecom_vivpayz'
+    #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config.from_object(Config)
 
     db.init_app(app)
@@ -31,6 +34,7 @@ def create_app():
     from vivpayz.payment.routes import paystack
     from vivpayz.main.routes import main
     from vivpayz.convert.routes import convert_bp
+    from vivpayz.transfer.routes import transfer_bp
     
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(user_bp)
@@ -39,4 +43,5 @@ def create_app():
     app.register_blueprint(paystack)
     app.register_blueprint(main)
     app.register_blueprint(convert_bp)
+    app.register_blueprint(transfer_bp)
     return app

@@ -62,13 +62,13 @@ def register():
             db.session.add(referral)
 
     # Step 4: Create wallets
-    for currency in ["NGN", "CFA"]:
+    for currency in ["NGN", "XOF"]:
         wallet = Wallet(user_id=user.id, currency=currency, balance=0)
         db.session.add(wallet)
 
     # Step 5: Create cards
     expiry_month, expiry_year = get_expiry_date()
-    for currency in ["NGN", "CFA"]:
+    for currency in ["NGN", "XOF"]:
         card_number = generate_card_number()
         card = Card(
             user_id=user.id,

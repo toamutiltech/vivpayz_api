@@ -121,3 +121,30 @@ class CurrencyConversion(db.Model):
 
     def __repr__(self):
         return f"<Conversion {self.from_amount} {self.from_currency} -> {self.to_amount} {self.to_currency}>"
+
+class Transfer(db.Model):
+    __tablename__ = 'transfers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'), nullable=False)
+    
+    amount = db.Column(db.Numeric(15, 2), nullable=False)
+    currency = db.Column(db.String(10), nullable=False)
+    
+    recipient_name = db.Column(db.String(100), nullable=False)
+    recipient_account = db.Column(db.String(50), nullable=False)
+    recipient_bank = db.Column(db.String(100), nullable=True)  # For NGN bank
+    recipient_type = db.Column(db.Enum('bank', 'mobile_money'), nullable=False)  # distinguishes transfer types
+    
+    reference = db.Column(db.String(100), nullable=False, unique=True)
+    status = db.Column(db.Enum('pending', 'success', 'failed'), default='pending')
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships (optional, but good for joining)
+    user = db.relationship('User', backref='transfers')
+    wallet = db.relationship('Wallet', backref='transfers')
+
+    def __repr__(self):
+        return f'<Transfer {self.id} - {self.currency} {self.amount}>'
