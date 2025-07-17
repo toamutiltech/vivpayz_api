@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -14,19 +14,22 @@ migrate = Migrate()
 jwt = JWTManager()
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_url_path='/static')  # 👈 Correctly put static_url_path here
+
+    # Enable CORS
     CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
-
-    #CORS(app, origins=["https://vivpayz-fintech.vercel.app"], supports_credentials=True)
-
+    # CORS(app, origins=["https://vivpayz-fintech.vercel.app"], supports_credentials=True)
     #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://bizapplivecom_vivpay:Bk9!39[O*+Cb@localhost/bizapplivecom_vivpayz'
     #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Load app config
     app.config.from_object(Config)
 
+    # Init extensions
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
 
+    # Register blueprints
     from vivpayz.auth.routes import auth_bp  
     from vivpayz.user.routes import user_bp
     from vivpayz.wallet.routes import wallet_bp
@@ -35,7 +38,7 @@ def create_app():
     from vivpayz.main.routes import main
     from vivpayz.convert.routes import convert_bp
     from vivpayz.transfer.routes import transfer_bp
-    
+
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(user_bp)
     app.register_blueprint(wallet_bp)
@@ -44,4 +47,10 @@ def create_app():
     app.register_blueprint(main)
     app.register_blueprint(convert_bp)
     app.register_blueprint(transfer_bp)
+
+    # 👇 Route to serve uploaded profile images
+    @app.route('/static/uploads/<filename>')
+    def uploaded_file(filename):
+        return send_from_directory('static/uploads', filename)
+
     return app

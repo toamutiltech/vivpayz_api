@@ -15,6 +15,7 @@ class User(db.Model):
     refer       = db.Column(db.String(255), nullable=True)
     refercode   = db.Column(db.String(255), nullable=True)
     phone       = db.Column(db.String(40), nullable=False)
+    profile_image = db.Column(db.String(255), nullable=False, default='/static/uploads/default.jpg')
     is_verified = db.Column(db.Boolean, default=False)
 
     def set_password(self, raw_password):
