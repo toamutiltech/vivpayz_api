@@ -23,6 +23,9 @@ class User(db.Model):
 
     def check_password(self, raw_password):
         return check_password_hash(self.password, raw_password)
+    
+       # 🚀 Add this relationship
+    wallet = db.relationship("Wallet", back_populates="owner", uselist=True, cascade="all, delete")
 
 
 class Wallet(db.Model):
@@ -34,7 +37,8 @@ class Wallet(db.Model):
     balance = db.Column(db.Numeric(15, 2), default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = db.relationship("User", backref="wallets")
+    # Relationship back to User
+    owner = db.relationship("User", back_populates="wallet")
 
 class Referral(db.Model):
     __tablename__ = 'referrals'

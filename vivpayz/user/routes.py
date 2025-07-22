@@ -97,3 +97,82 @@ def change_password(current_user):
 @user_bp.route('/static/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory('static/uploads', filename)
+
+@user_bp.route('/users')
+def get_users():
+    search = request.args.get('search', '')
+    page = int(request.args.get('page', 1))
+    per_page = 10
+
+    query = User.query.filter(
+        (User.fname.ilike(f'%{search}%')) |
+        (User.lname.ilike(f'%{search}%')) |
+        (User.email.ilike(f'%{search}%'))
+    )
+
+    users_paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    users = []
+    for user in users_paginated.items:
+        wallets = [
+            {'currency': wallet.currency, 'balance': float(wallet.balance)}
+            for wallet in user.wallet
+        ]
+
+        users.append({
+            'id': user.id,
+            'fname': user.fname,
+            'lname': user.lname,
+            'email': user.email,
+            'is_verified': user.is_verified,
+            'wallets': wallets
+        })
+
+    return jsonify({
+        'users': users,
+        'total': users_paginated.total,
+        'pages': users_paginated.pages,
+        'current_page': users_paginated.page
+    })
+
+
+@user_bp.route('/<int:user_id>', methods=['GET'])
+def view_user(user_id):
+    user = User.query.get_or_404(user_id)
+    wallets = [
+        {'currency': wallet.currency, 'balance': float(wallet.balance)}
+        for wallet in user.wallet
+    ]
+
+    return jsonify({
+        'user': {
+            'id': user.id,
+            'fname': user.fname,
+            'lname': user.lname,
+            'email': user.email,
+            'is_verified': user.is_verified,
+            'wallets': wallets
+        }
+    })
+
+
+
+@user_bp.route('/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if user.wallet:
+        db.session.delete(user.wallet)
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({'message': 'User and wallet deleted'})
+
+
+@user_bp.route('/<int:user_id>/toggle-block', methods=['POST'])
+def toggle_block(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_verified = not user.is_verified
+    db.session.commit()
+
+    return jsonify({'message': 'User status updated', 'is_verified': user.is_verified})
