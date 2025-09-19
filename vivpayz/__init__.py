@@ -31,23 +31,17 @@ def create_app():
     migrate.init_app(app, db)
     jwt.init_app(app)
 
-        # Import all models so they are registered with SQLAlchemy before create_all()
-    from vivpayz import models  # <-- make sure all model classes are in vivpayz/models.py
-
-        # Auto-create any missing tables (safe: skips existing tables)
-    from sqlalchemy import text
-
     with app.app_context():
-        try:
-            # Try to alter the column length to 10 characters
-            db.session.execute(text(
-                "ALTER TABLE cards ALTER COLUMN currency_code TYPE VARCHAR(10);"
-            ))
-            db.session.commit()
-            print("✅ Updated cards.currency_code column to VARCHAR(10)")
-        except Exception as e:
-            # If it already has the correct type or fails, just skip
-            print("ℹ️ Skipped column update (probably already done):", e)
+        from vivpayz import models  # make sure this imports ALL your model classes
+
+        # ⚠️ This will drop every table in your database
+        db.drop_all()
+        print("🗑️ Dropped all tables")
+
+        # Recreate all tables using your SQLAlchemy models
+        db.create_all()
+        print("✅ Recreated all tables from models")
+
 
 
     # Register blueprints
