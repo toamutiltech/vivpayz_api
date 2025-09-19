@@ -103,7 +103,7 @@ class Card(db.Model):
     expiry_month = db.Column(db.String(2))
     expiry_year = db.Column(db.String(2))
     last4 = db.Column(db.String(4))
-    status = db.Column(db.Enum('ACTIVE','DISABLED'), default='ACTIVE')
+    status = db.Column(db.Enum('ACTIVE','DISABLED', name='card_status'),  default='ACTIVE')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='cards')
@@ -117,12 +117,12 @@ class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'))
-    type = db.Column(db.Enum('credit','debit'))
+    type = db.Column(db.Enum('credit','debit', name='transaction_type'))
     purpose = db.Column(db.String(255))
     amount = db.Column(db.Numeric(15,2))
     currency = db.Column(db.String(10))
     reference = db.Column(db.String(100), unique=True)
-    status = db.Column(db.Enum('pending','success','failed'), default='success')
+    status = db.Column(db.Enum('pending','success','failed', name='transaction_status'), default='success')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='transactions')
@@ -153,7 +153,7 @@ class CurrencyConversion(db.Model):
     from_amount = db.Column(db.Numeric(18,2))
     rate = db.Column(db.Numeric(18,6))
     to_amount = db.Column(db.Numeric(18,2))
-    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED'), default='PENDING')
+    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED', name='conversion_status'), default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='currency_conversions')
@@ -173,7 +173,7 @@ class Transfer(db.Model):
     bank_code = db.Column(db.String(20))
     account_number = db.Column(db.String(20))
     reference = db.Column(db.String(50))
-    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED'), default='PENDING')
+    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED', name='transfers_status'), default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='transfers')
@@ -191,7 +191,7 @@ class AirtimeRecharge(db.Model):
     network = db.Column(db.String(40))
     amount = db.Column(db.Numeric(18,2))
     currency_code = db.Column(db.String(3))
-    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED'), default='PENDING')
+    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED', name='airtime_status'), default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='airtime_recharges')
@@ -205,7 +205,7 @@ class Bills(db.Model):
     provider = db.Column(db.String(100))
     account_number = db.Column(db.String(50))
     amount = db.Column(db.Numeric(10,2))
-    status = db.Column(db.Enum('pending','success','failed'), default='pending')
+    status = db.Column(db.Enum('pending','success','failed', name='bill_status'), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='bills')
@@ -219,7 +219,7 @@ class BillsPayment(db.Model):
     account_ref = db.Column(db.String(60))
     amount = db.Column(db.Numeric(18,2))
     currency_code = db.Column(db.String(3))
-    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED'), default='PENDING')
+    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED', name='billspay_status'), default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='bills_payments')
@@ -252,7 +252,7 @@ class DataRecharge(db.Model):
     package_name = db.Column(db.String(60))
     amount = db.Column(db.Numeric(18,2))
     currency_code = db.Column(db.String(3))
-    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED'), default='PENDING')
+    status = db.Column(db.Enum('PENDING','SUCCESS','FAILED', name='data_status'), default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='data_recharges')
@@ -291,7 +291,7 @@ class Payment(db.Model):
     amount = db.Column(db.Numeric(15,2))
     currency = db.Column(db.String(10))
     reference = db.Column(db.String(100), unique=True)
-    status = db.Column(db.Enum('pending','success','failed'), default='pending')
+    status = db.Column(db.Enum('pending','success','failed', name='payment_status'), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='payments')
@@ -301,11 +301,11 @@ class Recharge(db.Model):
     __tablename__ = 'recharges'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    type = db.Column(db.Enum('airtime','data'))
+    type = db.Column(db.Enum('airtime','data', name='recharge_type'))
     network = db.Column(db.String(50))
     phone_number = db.Column(db.String(20))
     amount = db.Column(db.Numeric(10,2))
-    status = db.Column(db.Enum('pending','success','failed'), default='pending')
+    status = db.Column(db.Enum('pending','success','failed', name='recharge_status'), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', back_populates='recharges')
@@ -315,7 +315,7 @@ class Verification(db.Model):
     __tablename__ = 'verifications'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    status = db.Column(db.Enum('unverified','pending','verified'), default='unverified')
+    status = db.Column(db.Enum('unverified','pending','verified', name='verifications_status'), default='unverified')
     method = db.Column(db.String(50))
     document = db.Column(db.String(255))
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
