@@ -55,7 +55,7 @@ class Wallet(db.Model):
     __tablename__ = 'wallets'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    currency = db.Column(db.String(10), nullable=False)
+    currency = db.Column(db.String(20), nullable=False)
     balance = db.Column(db.Numeric(15,2), default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -100,9 +100,9 @@ class Card(db.Model):
     currency_code = db.Column(db.String(10))
     card_number = db.Column(db.String(30))
     card_name = db.Column(db.String(60))
-    expiry_month = db.Column(db.String(2))
-    expiry_year = db.Column(db.String(2))
-    last4 = db.Column(db.String(4))
+    expiry_month = db.Column(db.String(10))
+    expiry_year = db.Column(db.String(10))
+    last4 = db.Column(db.String(10))
     status = db.Column(db.Enum('ACTIVE','DISABLED', name='card_status'),  default='ACTIVE')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -148,8 +148,8 @@ class CurrencyConversion(db.Model):
     __tablename__ = 'currency_conversions'
     id = db.Column(db.BigInteger, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    from_currency = db.Column(db.String(3))
-    to_currency = db.Column(db.String(3))
+    from_currency = db.Column(db.String(10))
+    to_currency = db.Column(db.String(10))
     from_amount = db.Column(db.Numeric(18,2))
     rate = db.Column(db.Numeric(18,6))
     to_amount = db.Column(db.Numeric(18,2))
@@ -192,7 +192,7 @@ class AirtimeRecharge(db.Model):
     phone = db.Column(db.String(30))
     network = db.Column(db.String(40))
     amount = db.Column(db.Numeric(18,2))
-    currency_code = db.Column(db.String(3))
+    currency_code = db.Column(db.String(10))
     status = db.Column(db.Enum('PENDING','SUCCESS','FAILED', name='airtime_status'), default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -220,7 +220,7 @@ class BillsPayment(db.Model):
     biller = db.Column(db.String(60))
     account_ref = db.Column(db.String(60))
     amount = db.Column(db.Numeric(18,2))
-    currency_code = db.Column(db.String(3))
+    currency_code = db.Column(db.String(10))
     status = db.Column(db.Enum('PENDING','SUCCESS','FAILED', name='billspay_status'), default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -253,7 +253,7 @@ class DataRecharge(db.Model):
     network = db.Column(db.String(40))
     package_name = db.Column(db.String(60))
     amount = db.Column(db.Numeric(18,2))
-    currency_code = db.Column(db.String(3))
+    currency_code = db.Column(db.String(10))
     status = db.Column(db.Enum('PENDING','SUCCESS','FAILED', name='data_status'), default='PENDING')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
