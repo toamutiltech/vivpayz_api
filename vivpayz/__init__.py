@@ -17,10 +17,11 @@ def create_app():
     app = Flask(__name__, static_url_path='/static')  # 👈 Correctly put static_url_path here
 
     # Enable CORS
-    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
-    # CORS(app, origins=["https://vivpayz-fintech.vercel.app"], supports_credentials=True)
-    #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://bizapplivecom_vivpay:Bk9!39[O*+Cb@localhost/bizapplivecom_vivpayz'
-    #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    #CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+    CORS(app, origins=["https://vivpayz-fintech.vercel.app"], supports_credentials=True)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://vivpayz_dbuser:hURmixfC2NI91VlAH0DzuiYGMb0JwTWd@dpg-d36kee7diees73btn2m0-a/vivpayz_db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
     # Load app config
     app.config.from_object(Config)
 
@@ -28,6 +29,13 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
+
+        # Import all models so they are registered with SQLAlchemy before create_all()
+    from vivpayz import models  # <-- make sure all model classes are in vivpayz/models.py
+
+    # Auto-create any missing tables (safe: skips existing tables)
+    with app.app_context():
+        db.create_all()
 
     # Register blueprints
     from vivpayz.auth.routes import auth_bp  
