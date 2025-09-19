@@ -97,7 +97,7 @@ class Card(db.Model):
     __tablename__ = 'cards'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    currency_code = db.Column(db.String(3))
+    currency_code = db.Column(db.String(10))
     card_number = db.Column(db.String(30))
     card_name = db.Column(db.String(60))
     expiry_month = db.Column(db.String(2))
