@@ -19,6 +19,7 @@ def create_app():
     # Enable CORS
     #CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
     CORS(app, origins=["https://vivpayz-fintech.vercel.app"], supports_credentials=True)
+    #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://bizapplivecom_vivpay:Bk9!39[O*+Cb@localhost/bizapplivecom_vivpayz'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://vivpayz_dbuser:hURmixfC2NI91VlAH0DzuiYGMb0JwTWd@dpg-d36kee7diees73btn2m0-a/vivpayz_db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
