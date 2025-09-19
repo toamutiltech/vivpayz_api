@@ -60,7 +60,7 @@ class Wallet(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     owner = db.relationship('User', back_populates='wallets')
-    transfers = db.relationship('Transfer', back_populates='wallet')
+    transfers = db.relationship('Transfer', back_populates='wallet', cascade='all, delete-orphan')
     transactions = db.relationship('Transaction', back_populates='wallet')
 
 
@@ -166,6 +166,7 @@ class Transfer(db.Model):
     __tablename__ = 'transfers'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'), nullable=False)  
     amount = db.Column(db.Numeric(15,2))
     currency = db.Column(db.String(10), default='NGN')
     recipient_code = db.Column(db.String(50))
@@ -178,6 +179,7 @@ class Transfer(db.Model):
 
     user = db.relationship('User', back_populates='transfers')
     wallet = db.relationship('Wallet', back_populates='transfers')
+
 
 
 # ------------------------
