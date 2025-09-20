@@ -229,10 +229,8 @@ def verify_code(current_user):
 
     verification.status = "verified"
     db.session.add(verification)
-    db.session.commit()
-
-    # Optionally mark user as verified
     current_user.is_verified = True
+    db.session.add(verification)
     db.session.add(current_user)
     db.session.commit()
 
