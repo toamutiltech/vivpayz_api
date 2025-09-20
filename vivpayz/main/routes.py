@@ -153,7 +153,11 @@ def waitlist():
 
 @main.route("/newsletter", methods=["POST"])
 def subscribe():
-    data = request.get_json()
+    data = request.get_json(silent=True)  # won't throw error if not JSON
+
+    if not data:  # fallback if it's form-data or urlencoded
+        data = request.form.to_dict()
+
     email = data.get("email", "").strip()
 
     if not email or "@" not in email:
