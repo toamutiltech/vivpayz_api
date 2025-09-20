@@ -3,10 +3,17 @@ from flask import current_app
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 from vivpayz.utils.auth import token_required  
-from vivpayz import db
-from vivpayz.models import User
+from vivpayz import mail, db
+from vivpayz.models import User, Verification
 import os
 from flask import send_from_directory
+from flask_mail import Message
+from datetime import datetime, timedelta
+import json, random, string
+
+
+def generate_code(length=6):
+    return ''.join(random.choices(string.digits, k=length))
 
 user_bp = Blueprint("user", __name__, url_prefix="/api/user")
 
@@ -176,3 +183,58 @@ def toggle_block(user_id):
     db.session.commit()
 
     return jsonify({'message': 'User status updated', 'is_verified': user.is_verified})
+
+
+@user_bp.route("/send-code", methods=["POST"])
+@token_required
+def send_code(current_user):
+    code = generate_code()
+    
+    verification = Verification.query.filter_by(user_id=current_user.id).first()
+    if not verification:
+        verification = Verification(user_id=current_user.id, status="pending")
+    
+    verification.method = json.dumps({"code": code})
+    verification.status = "pending"
+    db.session.add(verification)
+    db.session.commit()
+
+    msg = Message(
+        subject="Your Vivpayz Verification Code",
+        recipients=[current_user.email],
+        body=f"Your verification code is: {code}"
+    )
+
+    try:
+        mail.send(msg)
+        return jsonify({"status": "success", "message": "Verification code sent to your email."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to send email: {str(e)}"}), 500
+
+@user_bp.route("/verify-code", methods=["POST"])
+@token_required
+def verify_code(current_user):
+    data = request.get_json()
+    code_input = data.get("code", "").strip()
+
+    verification = Verification.query.filter_by(user_id=current_user.id).first()
+    if not verification or verification.status != "pending":
+        return jsonify({"status": "error", "message": "No pending verification found."}), 400
+
+    method_data = json.loads(verification.method or "{}")
+    code_stored = method_data.get("code")
+
+    if code_input != code_stored:
+        return jsonify({"status": "error", "message": "Incorrect code."}), 400
+
+    verification.status = "verified"
+    db.session.add(verification)
+    db.session.commit()
+
+    # Optionally mark user as verified
+    current_user.is_verified = True
+    db.session.add(current_user)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Account verified successfully."})
+

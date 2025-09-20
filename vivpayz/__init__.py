@@ -3,6 +3,7 @@ from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from flask_mail import Mail
 import os
 from vivpayz.config import Config
 from flask_cors import CORS
@@ -12,6 +13,7 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
+mail = Mail()
 
 def create_app():
     app = Flask(__name__, static_url_path='/static')  # 👈 Correctly put static_url_path here
@@ -22,6 +24,17 @@ def create_app():
     #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://bizapplivecom_vivpay:Bk9!39[O*+Cb@localhost/bizapplivecom_vivpayz'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://vivpayz_dbuser:hURmixfC2NI91VlAH0DzuiYGMb0JwTWd@dpg-d36kee7diees73btn2m0-a/vivpayz_db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Flask-Mail configuration
+    app.config['MAIL_SERVER'] = os.getenv("SMTP_SERVER")
+    app.config['MAIL_PORT'] = int(os.getenv("SMTP_PORT", 587))
+    app.config['MAIL_USERNAME'] = os.getenv("SMTP_USERNAME")
+    app.config['MAIL_PASSWORD'] = os.getenv("SMTP_PASSWORD")
+    app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USE_SSL'] = False
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv("SMTP_FROM")
+
+    mail.init_app(app)
 
     # Load app config
     app.config.from_object(Config)
