@@ -1,7 +1,7 @@
 from flask import request, jsonify, render_template, Blueprint
 from datetime import datetime
 from vivpayz.models import db
-from vivpayz.models import ContactMessage, User, NewsletterSubscriber
+from vivpayz.models import ContactMessage, User, NewsletterSubscriber, ExchangeRate
 from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import IntegrityError
 import smtplib
@@ -168,3 +168,41 @@ def subscribe():
     db.session.commit()
 
     return jsonify({"status": "success", "message": "Thank you for subscribing!"})
+
+
+@main.route("/api/update-rates", methods=["POST"])
+def update_rates():
+    try:
+        data = request.get_json()
+
+        base = data.get("base_currency")
+        target = data.get("target_currency")
+        rate = data.get("rate")
+
+        if not base or not target or not rate:
+            return jsonify({"error": "Missing fields"}), 400
+
+        # Upsert logic (insert or update if exists)
+        existing = ExchangeRate.query.filter_by(base_currency=base, target_currency=target).first()
+
+        if existing:
+            existing.rate = rate
+            existing.updated_at = datetime.utcnow()
+        else:
+            new_rate = ExchangeRate(
+                base_currency=base,
+                target_currency=target,
+                rate=rate,
+            )
+            db.session.add(new_rate)
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Rate updated {base} -> {target}: {rate}"
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
