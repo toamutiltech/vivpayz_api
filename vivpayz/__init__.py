@@ -35,12 +35,11 @@ def create_app():
         from vivpayz import models  # make sure this imports ALL your model classes
 
         # ⚠️ This will drop every table in your database
-        db.drop_all()
-        print("🗑️ Dropped all tables")
+        #db.drop_all()
+
 
         # Recreate all tables using your SQLAlchemy models
         db.create_all()
-        print("✅ Recreated all tables from models")
 
 
 
