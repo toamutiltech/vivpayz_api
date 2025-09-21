@@ -228,7 +228,7 @@ def verify_code(current_user):
         return jsonify({"status": "error", "message": "Incorrect code."}), 400
 
     verification.status = "verified"
-    current_user.is_verified = True
+    current_user.is_verified = 1
     db.session.add(verification)
     db.session.add(current_user)
     db.session.commit()
