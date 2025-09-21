@@ -20,7 +20,7 @@ class User(db.Model, UserMixin):
     refercode = db.Column(db.String(255))
     phone = db.Column(db.String(40))
     profile_image = db.Column(db.String(225), nullable=False, default='/static/uploads/default.jpg')
-    is_verified = db.Column(db.Integer, default=0)
+    is_verified = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

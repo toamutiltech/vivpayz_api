@@ -47,7 +47,8 @@ def register():
         lname=data["lname"],
         phone=data["phone"],
         refer=data.get("refer"),
-        refercode=referral_code
+        refercode=referral_code,
+        is_verified = 0
     )
     user.set_password(data["password"])
     db.session.add(user)
