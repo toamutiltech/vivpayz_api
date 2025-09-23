@@ -44,15 +44,15 @@ def create_app():
     migrate.init_app(app, db)
     jwt.init_app(app)
 
-    with app.app_context():
-        from vivpayz import models  # make sure this imports ALL your model classes
+    #with app.app_context():
+        #from vivpayz import models  # make sure this imports ALL your model classes
 
         # ⚠️ This will drop every table in your database
-        db.drop_all()
+       # db.drop_all()
 
 
         # Recreate all tables using your SQLAlchemy models
-        db.create_all()
+        #db.create_all()
 
 
 
