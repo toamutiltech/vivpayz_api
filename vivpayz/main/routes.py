@@ -106,7 +106,7 @@ def waitlist():
             lname="",
             refercode=refer_code,
             phone="",
-            is_verified=False,
+            is_verified = 0,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )
