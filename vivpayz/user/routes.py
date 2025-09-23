@@ -32,7 +32,8 @@ def get_user_profile(current_user):
         "fname": current_user.fname,
         "lname": current_user.lname,
         "phone": current_user.phone,
-        "profile_image": current_user.profile_image,  # 👈 include this
+        'is_verified': current_user.is_verified,
+        "profile_image": current_user.profile_image,  
     }), 200
 
 
