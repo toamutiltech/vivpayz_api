@@ -226,12 +226,18 @@ def verify_code(current_user):
 
     if code_input != code_stored:
         return jsonify({"status": "error", "message": "Incorrect code."}), 400
+    
+    # ✅ Fetch the actual user
+    user = User.query.filter_by(id=current_user.id).first()
+    if not user:
+        return jsonify({"status": "error", "message": "User not found."}), 404
 
+    # ✅ Update verification status
+    user.is_verified = 1  
     verification.status = "verified"
-    current_user.is_verified = 1
-    db.session.add(verification)
-    db.session.add(current_user)
+
     db.session.commit()
 
     return jsonify({"status": "success", "message": "Account verified successfully."})
+
 
