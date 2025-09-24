@@ -24,7 +24,7 @@ def create_paystack_recipient(name, account_number, bank_code):
         "account_number": account_number,
         "bank_code": bank_code,
         "currency": "NGN"
-    }
+    } 
 
     res = requests.post(url, headers=headers, json=data)
     res_data = res.json()
