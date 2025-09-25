@@ -80,8 +80,12 @@ def paystack_transfer(current_user):
     if not wallet:
         return jsonify({'error': 'NGN wallet not found'}), 404
 
-    if wallet.balance < amount:
-        return jsonify({'error': 'Insufficient NGN balance'}), 400
+    # Service fee: ₦20 per ₦10,000 (0.2%)
+    service_fee = round((amount / 10000) * 20, 2)
+
+    total_deduction = amount + service_fee
+    if wallet.balance < total_deduction:
+        return jsonify({'error': 'Insufficient NGN balance (includes service fee)'}), 400
 
     try:
         # 1. Create recipient in Paystack
@@ -93,10 +97,10 @@ def paystack_transfer(current_user):
         # 3. Initiate transfer
         transfer_response = initiate_paystack_transfer(amount, recipient_code, "User payout", reference)
 
-        # 4. Deduct from wallet
-        wallet.balance -= amount
+        # 4. Deduct amount + fee
+        wallet.balance -= total_deduction
 
-        # 5. Log transfer
+        # 5. Log transfer (amount only)
         transfer = Transfer(
             user_id=current_user.id,
             amount=amount,
@@ -110,7 +114,7 @@ def paystack_transfer(current_user):
         )
         db.session.add(transfer)
 
-        # 6. Log transaction
+        # 6. Log transaction: main transfer
         txn = Transaction(
             user_id=current_user.id,
             wallet_id=wallet.id,
@@ -123,19 +127,48 @@ def paystack_transfer(current_user):
         )
         db.session.add(txn)
 
+        # 7. Log transaction: service fee
+        fee_txn = Transaction(
+            user_id=current_user.id,
+            wallet_id=wallet.id,
+            type='debit',
+            purpose='Bank Transfer Service Fee',
+            amount=service_fee,
+            currency='NGN',
+            reference=f"{reference}_FEE",
+            status='success'
+        )
+        db.session.add(fee_txn)
+
         db.session.commit()
 
         return jsonify({
             'message': 'Transfer initiated successfully',
             'transfer': transfer_response,
             'new_balance': float(wallet.balance),
-            'reference': reference
+            'reference': reference,
+            'service_fee': service_fee
         }), 200
 
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Transfer failed', 'details': str(e)}), 500
-    
+
+
+@transfer_bp.route('/paystack/calc-fee', methods=['POST'])
+@token_required
+def calc_fee(current_user):
+    data = request.get_json()
+    amount = float(data.get("amount", 0))
+    if amount <= 0:
+        return jsonify({"error": "Invalid amount"}), 400
+
+    # Example: ₦20 per ₦10,000
+    service_fee = (amount / 10000) * 20
+
+    return jsonify({"service_fee": round(service_fee, 2)})
+
+
 @transfer_bp.route('/paystack/banks', methods=['GET'])
 def get_banks():
     headers = {
@@ -169,7 +202,11 @@ def send_mobile_money(current_user):
     if not wallet:
         return jsonify({'error': f'{currency} wallet not found'}), 404
 
-    if wallet.balance < amount:
+    # 2. Calculate service fee
+    service_fee = (amount / 10000) * 20  # 20 XOF per 10k
+    total_deduction = amount + service_fee
+
+    if wallet.balance < total_deduction:
         return jsonify({'error': 'Insufficient wallet balance'}), 400
 
     try:
@@ -178,12 +215,12 @@ def send_mobile_money(current_user):
             "Content-Type": "application/json"
         }
 
-        # 2. Create transfer recipient
+        # 3. Create transfer recipient
         recipient_payload = {
             "type": "mobile_money",
             "name": name,
             "account_number": phone,
-            "bank_code": "MOBILEMONEY",  # Paystack-required
+            "bank_code": "MOBILEMONEY",
             "currency": currency
         }
 
@@ -198,13 +235,13 @@ def send_mobile_money(current_user):
 
         recipient_code = recipient_res.json()['data']['recipient_code']
 
-        # 3. Generate reference
+        # 4. Generate reference
         reference = f"MOMO_{uuid.uuid4().hex[:10]}"
 
-        # 4. Initiate transfer
+        # 5. Initiate transfer
         transfer_payload = {
             "source": "balance",
-            "amount": int(amount * 100),  # Convert to centime
+            "amount": int(amount * 100),  # convert to centime
             "recipient": recipient_code,
             "reason": "Mobile Money Transfer",
             "reference": reference
@@ -219,10 +256,10 @@ def send_mobile_money(current_user):
         if transfer_res.status_code != 200:
             return jsonify({'error': 'Transfer initiation failed', 'details': transfer_res.json()}), 400
 
-        # 5. Deduct from wallet
-        wallet.balance -= amount
+        # 6. Deduct from wallet (amount + service fee)
+        wallet.balance -= total_deduction
 
-        # 6. Log to Transfer table
+        # 7. Log transfer
         transfer = Transfer(
             user_id=current_user.id,
             amount=amount,
@@ -236,7 +273,7 @@ def send_mobile_money(current_user):
         )
         db.session.add(transfer)
 
-        # 7. Log to Transactions table
+        # 8. Log transaction (transfer)
         txn = Transaction(
             user_id=current_user.id,
             wallet_id=wallet.id,
@@ -249,18 +286,52 @@ def send_mobile_money(current_user):
         )
         db.session.add(txn)
 
+        # 9. Log transaction (service fee)
+        fee_txn = Transaction(
+            user_id=current_user.id,
+            wallet_id=wallet.id,
+            type='debit',
+            purpose='Service Fee (Mobile Money Transfer)',
+            amount=service_fee,
+            currency=currency,
+            reference=f"FEE_{reference}",
+            status='success'
+        )
+        db.session.add(fee_txn)
+
         db.session.commit()
 
         return jsonify({
             'message': 'Mobile money transfer initiated',
             'reference': reference,
             'transfer_data': transfer_res.json()['data'],
+            'service_fee': round(service_fee, 2),
+            'total_deduction': round(total_deduction, 2),
             'new_balance': float(wallet.balance)
         }), 200
 
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Transfer failed', 'details': str(e)}), 500
+
+
+@transfer_bp.route('/paystack/calc-fee-xof', methods=['POST'])
+@token_required
+def calc_fee_xof(current_user):
+    data = request.get_json()
+    amount = float(data.get("amount", 0))
+
+    if amount <= 0:
+        return jsonify({"error": "Invalid amount"}), 400
+
+    # Example: 20 XOF fee per 10,000 XOF sent
+    service_fee = (amount / 10000) * 20
+
+    return jsonify({
+        "service_fee": round(service_fee, 2),
+        "net_amount": round(amount - service_fee, 2)
+    })
+
     
 @transfer_bp.route('/transactions', methods=['GET'])
 @token_required
