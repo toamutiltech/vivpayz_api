@@ -116,59 +116,36 @@ def convert_currency(current_user):
 
 
 
-
-
 @convert_bp.route('/preview-conversion', methods=['POST'])
 @token_required
 def preview_conversion(current_user):
     data = request.get_json()
-    from_currency = data.get('from_currency')
-    to_currency = data.get('to_currency')
-    from_amount = Decimal(str(data.get('amount', 0)))
+    from_currency = data.get('base_currency')
+    to_currency = data.get('target_currency')
+    amount = Decimal(str(data.get('amount', 0)))
 
-    if not from_currency or not to_currency or from_amount <= 0:
-        return jsonify({'error': 'Invalid conversion data'}), 400
+    if not from_currency or not to_currency:
+        return jsonify({'error': 'Missing base or target currency'}), 400
 
-    if from_currency == to_currency:
-        return jsonify({'error': 'Cannot convert to the same currency'}), 400
+    rate = ExchangeRate.query.filter_by(
+        base_currency=from_currency, target_currency=to_currency
+    ).first()
 
-    try:
-        rate = ExchangeRate.query.filter_by(
-            base_currency=from_currency,
-            target_currency=to_currency
-        ).first()
+    if not rate:
+        return jsonify({'error': 'Rate not available'}), 404
 
-        if not rate:
-            return jsonify({'error': 'Exchange rate not available'}), 400
+    effective_rate = Decimal(str(rate.rate)) * Decimal("0.95")  # 5% markup
+    base_amount = amount * effective_rate
 
-        # ✅ Apply 5% markup
-        adjusted_rate = Decimal(str(rate.rate)) * Decimal("0.95")
+    # Service fee (percent + cap from env or default)
+    fee_percent = Decimal(os.getenv("SERVICE_FEE_PERCENT", "0.01"))
+    fee_cap = Decimal(os.getenv("SERVICE_FEE_CAP", "2000.00"))
+    service_fee = min(base_amount * fee_percent, fee_cap)
 
-        # Base converted amount
-        base_amount = from_amount * adjusted_rate
+    final_estimate = (base_amount - service_fee).quantize(Decimal("0.01"))
 
-        # Tiered service fee (same as /convert-currency)
-        # -------------------------
-        # Service Fee Calculation (percentage + cap)
-        # -------------------------
-        percentage_fee = from_amount * Decimal("0.01")  # 1% of original amount
-        max_fee = Decimal("2000.00")  # Maximum fee cap
-
-        service_fee = min(percentage_fee, max_fee)
-
-        # Final amount after service fee
-        to_amount = (base_amount - service_fee).quantize(Decimal("0.01"))
-
-
-        return jsonify({
-            'from_currency': from_currency,
-            'to_currency': to_currency,
-            'from_amount': float(from_amount),
-            'rate': float(adjusted_rate),     # user sees adjusted rate
-            'converted_before_fee': float(base_amount),
-            'service_fee': float(service_fee),
-            'final_amount': float(to_amount)  # ✅ what user will actually get
-        }), 200
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    return jsonify({
+        "effective_rate": float(effective_rate),
+        "service_fee": float(service_fee),
+        "estimated_final": float(final_estimate)
+    }), 200
