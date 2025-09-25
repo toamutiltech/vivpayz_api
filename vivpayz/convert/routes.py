@@ -138,8 +138,9 @@ def preview_conversion(current_user):
     base_amount = amount * effective_rate
 
     # Service fee (percent + cap from env or default)
-    fee_percent = Decimal(os.getenv("SERVICE_FEE_PERCENT", "0.01"))
-    fee_cap = Decimal(os.getenv("SERVICE_FEE_CAP", "2000.00"))
+
+    fee_percent = Decimal("0.01")
+    fee_cap = Decimal("2000.00")
     service_fee = min(base_amount * fee_percent, fee_cap)
 
     final_estimate = (base_amount - service_fee).quantize(Decimal("0.01"))

@@ -19,11 +19,11 @@ def create_app():
     app = Flask(__name__, static_url_path='/static')  # 👈 Correctly put static_url_path here
 
     # Enable CORS
-    #CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
-    CORS(app, origins=["https://vivpayz-fintech.vercel.app", "https://vivpayz.tech"], supports_credentials=True)
+    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+    #CORS(app, origins=["https://vivpayz-fintech.vercel.app", "https://vivpayz.tech"], supports_credentials=True)
     #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://bizapplivecom_vivpay:Bk9!39[O*+Cb@localhost/bizapplivecom_vivpayz'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://vivpayz_dbuser:hURmixfC2NI91VlAH0DzuiYGMb0JwTWd@dpg-d36kee7diees73btn2m0-a/vivpayz_db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    #app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://vivpayz_dbuser:hURmixfC2NI91VlAH0DzuiYGMb0JwTWd@dpg-d36kee7diees73btn2m0-a/vivpayz_db'
+    #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Flask-Mail configuration
     app.config['MAIL_SERVER'] = os.getenv("SMTP_SERVER")
@@ -48,7 +48,7 @@ def create_app():
         #from vivpayz import models  # make sure this imports ALL your model classes
 
         # ⚠️ This will drop every table in your database
-       # db.drop_all()
+        #db.drop_all()
 
 
         # Recreate all tables using your SQLAlchemy models
