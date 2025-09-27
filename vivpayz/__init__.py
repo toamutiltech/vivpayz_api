@@ -25,6 +25,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://vivpayz_dbuser:hURmixfC2NI91VlAH0DzuiYGMb0JwTWd@dpg-d36kee7diees73btn2m0-a/vivpayz_db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+
     # Flask-Mail configuration
     app.config['MAIL_SERVER'] = os.getenv("SMTP_SERVER")
     app.config['MAIL_PORT'] = int(os.getenv("SMTP_PORT", 587))
